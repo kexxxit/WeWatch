@@ -26,13 +26,14 @@ import io.reactivex.schedulers.Schedulers
 
 //const val SEARCH_QUERY = "searchQuery"
 
-class SearchActivity : AppCompatActivity() {
+class SearchActivity : AppCompatActivity(), SearchContract.ViewInterface {
   private val TAG = "SearchActivity"
   private lateinit var searchResultsRecyclerView: RecyclerView
   private lateinit var adapter: SearchAdapter
   private lateinit var noMoviesTextView: TextView
   private lateinit var progressBar: ProgressBar
   private var query = ""
+  private lateinit var searchPresenter: SearchPresenter
 
   private var dataSource = RemoteDataSource()
   private val compositeDisposable = CompositeDisposable()
@@ -43,6 +44,7 @@ class SearchActivity : AppCompatActivity() {
     searchResultsRecyclerView = findViewById(R.id.search_results_recyclerview)
     noMoviesTextView = findViewById(R.id.no_movies_textview)
     progressBar = findViewById(R.id.progress_bar)
+    setupPresenter()
 
     val i = intent
     query = i.getStringExtra(SEARCH_QUERY) ?: ""
@@ -52,13 +54,14 @@ class SearchActivity : AppCompatActivity() {
   override fun onStart() {
     super.onStart()
     progressBar.visibility = VISIBLE
-    getSearchResults(query)
+    searchPresenter.getSearchResults(query)
   }
 
   override fun onStop() {
     super.onStop()
-    compositeDisposable.clear()
+    searchPresenter.stop()
   }
+
 
   private fun setupViews() {
     searchResultsRecyclerView.layoutManager = LinearLayoutManager(this)
@@ -94,7 +97,7 @@ class SearchActivity : AppCompatActivity() {
       }
     }
 
-  fun displayResult(tmdbResponse: TmdbResponse) {
+  override fun displayResult(tmdbResponse: TmdbResponse) {
     progressBar.visibility = INVISIBLE
 
     if (tmdbResponse.totalResults == null || tmdbResponse.totalResults == 0) {
@@ -110,11 +113,15 @@ class SearchActivity : AppCompatActivity() {
     }
   }
 
+  override fun displayMessage(message: String) {
+    TODO("Not yet implemented")
+  }
+
   fun showToast(string: String) {
     Toast.makeText(this@SearchActivity, string, Toast.LENGTH_LONG).show()
   }
 
-  fun displayError(string: String) {
+  override fun displayError(string: String) {
     showToast(string)
   }
 
@@ -145,6 +152,11 @@ class SearchActivity : AppCompatActivity() {
 
   interface RecyclerItemListener {
     fun onItemClick(v: View, position: Int)
+  }
+
+  private fun setupPresenter() {
+    val dataSource = RemoteDataSource()
+    searchPresenter = SearchPresenter(this, dataSource)
   }
 
 }

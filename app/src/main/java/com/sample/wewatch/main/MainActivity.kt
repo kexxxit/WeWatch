@@ -30,7 +30,7 @@ import io.reactivex.schedulers.Schedulers
 class MainActivity : AppCompatActivity(), MainContract.ViewInterface {
 
   private lateinit var moviesRecyclerView: RecyclerView
-  private var adapter: MainAdapter? = null
+  private lateinit var adapter: MainAdapter
   private lateinit var fab: FloatingActionButton
   private lateinit var noMoviesLayout: LinearLayout
 
@@ -59,7 +59,7 @@ class MainActivity : AppCompatActivity(), MainContract.ViewInterface {
 
   override fun onStop() {
     super.onStop()
-    compositeDisposable.clear()
+    mainPresenter.stop()
   }
 
   private fun setupViews() {
@@ -92,29 +92,21 @@ class MainActivity : AppCompatActivity(), MainContract.ViewInterface {
 
   override fun onOptionsItemSelected(item: MenuItem): Boolean {
     if (item.itemId == R.id.deleteMenuItem) {
-      val adapter = this.adapter
-      if (adapter != null) {
-        for (movie in adapter.selectedMovies) {
-          dataSource.delete(movie)
-        }
-        if (adapter.selectedMovies.size == 1) {
-          showToast("Movie deleted")
-        } else if (adapter.selectedMovies.size > 1) {
-          showToast("Movies deleted")
-        }
-      }
+      mainPresenter.onDeleteTapped(adapter.selectedMovies)
     }
-
     return super.onOptionsItemSelected(item)
   }
+
+
 
   fun showToast(str: String) {
     Toast.makeText(this@MainActivity, str, Toast.LENGTH_LONG).show()
   }
 
   override fun displayMovies(movieList: List<Movie>) {
-    adapter?.movieList = movieList
-    adapter?.notifyDataSetChanged()
+    adapter = MainAdapter(movieList, this@MainActivity)
+    adapter.notifyDataSetChanged()
+    moviesRecyclerView.adapter = adapter
     moviesRecyclerView.visibility = VISIBLE
     noMoviesLayout.visibility = INVISIBLE
   }
@@ -139,5 +131,4 @@ class MainActivity : AppCompatActivity(), MainContract.ViewInterface {
   companion object {
     const val ADD_MOVIE_ACTIVITY_REQUEST_CODE = 1
   }
-
 }

@@ -17,14 +17,16 @@ import com.sample.wewatch.search.SearchActivity
 
 import com.squareup.picasso.Picasso
 
-open class AddMovieActivity : AppCompatActivity() {
+open class AddMovieActivity : AppCompatActivity(), AddMovieContract.ViewInterface {
   private lateinit var titleEditText: EditText
   private lateinit var releaseDateEditText: EditText
   private lateinit var movieImageView: ImageView
   private lateinit var dataSource: LocalDataSource
+  private lateinit var addMoviePresenter: AddMoviePresenter
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
+    setupPresenter()
     setContentView(R.layout.activity_add_movie)
     setupViews()
     dataSource = LocalDataSource(application)
@@ -45,21 +47,12 @@ open class AddMovieActivity : AppCompatActivity() {
   }
 
   //addMovie onClick
-  fun onClickAddMovie(v: View) {
-
-    if (TextUtils.isEmpty(titleEditText.text)) {
-      showToast("Movie title cannot be empty")
-    } else {
-      val title = titleEditText.text.toString()
-      val releaseDate = releaseDateEditText.text.toString()
-      val posterPath = if (movieImageView.tag != null) movieImageView.tag.toString() else ""
-
-      val movie = Movie(title = title, releaseDate = releaseDate, posterPath = posterPath)
-      dataSource.insert(movie)
-
-      setResult(Activity.RESULT_OK)
-      finish()
-    }
+  fun onClickAddMovie (view: View) {
+    val title = titleEditText.text.toString()
+    val releaseDate = releaseDateEditText.text.toString()
+    val posterPath = if (movieImageView.tag != null )
+      movieImageView.tag.toString() else ""
+    addMoviePresenter.addMovie(title, releaseDate, posterPath)
   }
 
   override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -80,4 +73,24 @@ open class AddMovieActivity : AppCompatActivity() {
   companion object {
     const val SEARCH_MOVIE_ACTIVITY_REQUEST_CODE = 2
   }
+
+  override fun returnToMain() {
+    setResult(Activity.RESULT_OK)
+    finish()
+  }
+
+  override fun displayMessage (message: String ) {
+    Toast.makeText( this@AddMovieActivity , message,
+      Toast.LENGTH_LONG).show()
+  }
+  override fun displayError (message: String ) {
+    displayMessage (message)
+  }
+
+  fun setupPresenter() {
+    val dataSource = LocalDataSource(application)
+    addMoviePresenter = AddMoviePresenter(this, dataSource)
+  }
+
+
 }
